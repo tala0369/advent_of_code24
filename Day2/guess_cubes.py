@@ -1,6 +1,8 @@
 from utils import utils
 from pathlib import Path
 from typing import List
+from collections import defaultdict
+from functools import reduce
 
 
 def get_game_from_line(line: str) -> dict:
@@ -18,7 +20,7 @@ def get_game_from_line(line: str) -> dict:
     return {"id": id_num, "results": results}
 
 
-def is_game_valid(max_count, results):
+def is_game_valid(max_count: dict[int], results: List[dict]) -> bool:
     for round in results:
         for color, count in round.items():
             if count > max_count[color]:
@@ -29,18 +31,37 @@ def is_game_valid(max_count, results):
 def get_games() -> List[str]:
     path = Path(__file__).with_name("input.txt")
     lines = utils.get_lines(path)
-    return lines
+    all_games = [get_game_from_line(l) for l in lines]
+    return all_games
 
 
-def part_one():
+def part_one() -> int:
     max_count = {"red": 12, "green": 13, "blue": 14}
     all_games = get_games()
     id_sum = 0
-    for game_line in all_games:
-        this_game = get_game_from_line(game_line)
-        if is_game_valid(max_count, this_game["results"]):
-            id_sum += this_game["id"]
+    for game in all_games:
+        if is_game_valid(max_count, game["results"]):
+            id_sum += game["id"]
     return id_sum
 
 
+def get_max_values(results: List[dict]):
+    max_values = defaultdict(int)
+    for round in results:
+        for color, count in round.items():
+            max_values[color] = max(count, max_values[color])
+    return max_values
+
+
+def part_two():
+    all_games = get_games()
+    power_sum = 0
+    for game in all_games:
+        max_values = get_max_values(game["results"])
+        power = reduce(lambda x, y: x * y, max_values.values())
+        power_sum += power
+    return power_sum
+
+
 print(part_one())
+print(part_two())
